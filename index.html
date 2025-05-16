@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Now - Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <ul>
+          <li><a href="home-page.html">Home</a></li>
+          <li><a href="details.html">Weather Details</a></li>
+          <li><a href="compare.html">Compare Cities</a></li>
+        </ul>
+    </nav>
+    <header class="header">
+        <h1>Current Weather Overview</h1>
+    </header>
+
+    <main class="container">
+        <section class="weather-card" id="weather">
+        <p>Loading weather data...</p>
+        </section>
+        <input type="text" id="cityInput" placeholder="Enter city" />
+        <button id="searchBtn">Search</button>
+        <button id="toggleTemp">Switch to Fahrenheit</button>
+    </main>
+
+    <div id="loadingSpinner" class="spinner" style="display:none;"></div>  <!--loading symbol -->
+
+    <script>
+        const API_KEY = "ad8de53a653a7ba335531e5eaf5c9c67";  //API key for weatherstack
+        const defaultCity = "Baltimore";  //default city displayed
+        let isCelsius = true;
+
+        //the weather for the specified city
+        async function fetchWeather(city) {
+            const res = await fetch(`https://api.weatherstack.com/current?access_key=${API_KEY}&query=${city}`);
+            const data = await res.json();
+            return data;
+        }
+
+        //display weather information on the page
+        function displayWeather(data) {
+            if (data.error) {
+                document.getElementById('weather').innerHTML = `<p>Error: ${data.error.info}</p>`;
+                return;
+            }
+
+            //update the background color based on the weather
+            changeBackground(data);
+
+            const weatherHTML = `
+                <h2>${data.location.name}, ${data.location.country}</h2>
+                <img src="${data.current.weather_icons[0]}" alt="${data.current.weather_descriptions[0]}" />
+                <p><strong>${data.current.weather_descriptions[0]}</strong></p>
+                <p id="temperature">Temperature: ${data.current.temperature}°C</p>
+                <p>Feels Like: ${data.current.feelslike}°C</p>
+                <p>Humidity: ${data.current.humidity}%</p>
+                <p>Wind Speed: ${data.current.wind_speed} km/h</p>
+            `;
+            document.getElementById('weather').innerHTML = weatherHTML;
+            document.getElementById('loadingSpinner').style.display = 'none';  
+        }
+
+        //change the background based on the weather description
+        function changeBackground(weather) {
+            if (weather.current.weather_descriptions.includes("Sunny")) {
+                document.body.style.backgroundColor = "#fffae6"; //light yellow for sunny
+            } else if (weather.current.weather_descriptions.includes("Rain")) {
+                document.body.style.backgroundColor = "#cce7ff"; //light blue for rain
+            } else {
+                document.body.style.backgroundColor = "#f1f1f1"; //default background
+            }
+        }
+
+        //function to toggle between Celsius and Fahrenheit
+        document.getElementById('toggleTemp').addEventListener('click', () => {
+            isCelsius = !isCelsius;
+            const temperature = document.getElementById('temperature');
+            const tempInCelsius = temperature.innerText.split(' ')[1];
+            const tempInFahrenheit = (parseInt(tempInCelsius) * 9/5) + 32;
+            temperature.innerHTML = `Temperature: ${isCelsius ? tempInCelsius + "°C" : tempInFahrenheit.toFixed(1) + "°F"}`;
+            document.getElementById('toggleTemp').innerText = isCelsius ? "Switch to Fahrenheit" : "Switch to Celsius";
+        });
+
+        //isplay the weather for the default city on page load
+        fetchWeather(defaultCity).then(displayWeather);
+
+        //search for weather based on the user's input
+        document.getElementById('searchBtn').addEventListener('click', async () => {
+            const city = document.getElementById('cityInput').value || defaultCity;
+            document.getElementById('loadingSpinner').style.display = 'block';  // Show loading spinner
+            const data = await fetchWeather(city);
+            displayWeather(data);
+        });
+    </script>
+</body>
+</html>
