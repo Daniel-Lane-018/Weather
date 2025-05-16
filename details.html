@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Detailed Weather Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="details.html">Weather Details</a></li>
+          <li><a href="compare.html">Compare Cities</a></li>
+        </ul>
+    </nav>
+    <header class="header">
+        <h1>Detailed Weather Report</h1>
+    </header>
+
+    <main class="container">
+        <section class="search-box">
+        <input type="text" id="cityInput" placeholder="Enter city name" />
+        <button onclick="handleSearch()">Search</button>
+        </section>
+
+        <section class="weather-card" id="detailedWeather">
+        <p>Enter a city to view detailed weather information.</p>
+        </section>
+    </main>
+
+    <script>
+    const API_KEY = 'ad8de53a653a7ba335531e5eaf5c9c67';
+
+    async function fetchDetailedWeather(city) {
+        const url = `https://api.weatherstack.com/current?access_key=${API_KEY}&query=${encodeURIComponent(city)}&aqi=1`; // Add &aqi=1 if supported
+        const response = await fetch(url);
+        const data = await response.json();
+        return data;
+    }
+
+    function displayDetailedWeather(data) {
+        const container = document.getElementById('detailedWeather');
+        if (data.error) {
+            container.innerHTML = `<p>Error: ${data.error.info}</p>`;
+            return;
+        }
+
+        const current = data.current;
+        const location = data.location;
+        const pollution = current.air_quality || {}; // simulate structure
+
+        const html = `
+            <h2>${location.name}, ${location.country}</h2>
+            <p><strong>Observed at:</strong> ${current.observation_time}</p>
+            <img src="${current.weather_icons[0]}" alt="${current.weather_descriptions[0]}" />
+            <p><strong>${current.weather_descriptions[0]}</strong></p>
+
+            <div class="weather-grid">
+            <div>
+                <h3>Temperature</h3>
+                <p>${current.temperature}°C (Feels like ${current.feelslike}°C)</p>
+            </div>
+            <div>
+                <h3>Wind</h3>
+                <p>${current.wind_speed} km/h, ${current.wind_dir}</p>
+            </div>
+            <div>
+                <h3>Humidity & Precipitation</h3>
+                <p>Humidity: ${current.humidity}%<br>Precip: ${current.precip} mm</p>
+            </div>
+            <div>
+                <h3>Pressure & UV</h3>
+                <p>${current.pressure} mb<br>UV Index: ${current.uv_index}</p>
+            </div>
+            <div>
+                <h3>Visibility & Cloud</h3>
+                <p>${current.visibility} km<br>Cloud Cover: ${current.cloudcover}%</p>
+            </div>
+            <div>
+                <h3>Air Quality</h3>
+                <p>
+                CO: ${pollution.co || 'N/A'} μg/m³<br>
+                NO₂: ${pollution.no2 || 'N/A'} μg/m³<br>
+                US EPA Index: ${pollution["us-epa-index"] || 'N/A'}
+                </p>
+            </div>
+            </div>
+            <p><small>Local Time: ${location.localtime}</small></p>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    function handleSearch() {
+        const city = document.getElementById('cityInput').value.trim();
+        if (!city) {
+            alert("Please enter a city name.");
+            return;
+        }
+
+        document.getElementById('detailedWeather').innerHTML = `<p>Loading weather data for ${city}...</p>`;
+        fetchDetailedWeather(city).then(displayDetailedWeather);
+    }
+    </script>
+</body>
+</html>
